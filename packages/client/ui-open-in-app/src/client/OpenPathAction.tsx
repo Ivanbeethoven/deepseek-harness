@@ -44,10 +44,12 @@ export function FileOpenTarget(props: FileOpenTargetProps): ReactNode {
   useEffect(() => {
     if (desktop === null) void props.loadDesktop()
   }, [desktop, props.loadDesktop])
+  /* The desktop answer arrives asynchronously. Render nothing until it is known, so a desktop
+     never flashes a download control it does not need. */
+  if (desktop === null) return null
   /*
-   * No host desktop means the file cannot be opened here — a phone browsing a remote
-   * session, for example. That is exactly when a download is what the user wants, so offer
-   * one instead of rendering nothing.
+   * A known absence of a host desktop means the file cannot be opened here — a phone browsing
+   * a remote session, for example. That is exactly when a download is what the user wants.
    */
   if (desktop !== true) {
     return (

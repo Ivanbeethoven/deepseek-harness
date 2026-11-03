@@ -53,14 +53,18 @@ function bench(over: { desktop?: boolean | null; openPath?: Bench['openPath'] } 
 }
 
 describe('OpenPathAction visibility', () => {
-  it('renders nothing and asks for the desktop answer while it is unknown, and nothing without a desktop', () => {
+  it('renders nothing while the desktop answer is unknown, and offers a download without a desktop', () => {
     const unknown = bench({ desktop: null })
     const { container } = render(<OpenPathAction {...unknown.props} />)
     expect(container.innerHTML).toBe('')
     expect(unknown.loadDesktop).toHaveBeenCalledOnce()
     cleanup()
     const absent = bench({ desktop: false })
-    expect(render(<OpenPathAction {...absent.props} />).container.innerHTML).toBe('')
+    /* No desktop means the file cannot be opened here, so the control offers a download. */
+    const link = render(<OpenPathAction {...absent.props} />).container.querySelector('a')
+    expect(link?.getAttribute('href')).toBe(`/ssh-bridge/file?p=${encodeURIComponent(ABSOLUTE_PATH)}`)
+    expect(link?.getAttribute('download')).not.toBeNull()
+    expect(link?.textContent).toBe(zh['path.download'])
     expect(absent.loadDesktop).not.toHaveBeenCalled()
   })
 })
@@ -114,9 +118,11 @@ describe('OpenPathAction gestures', () => {
 })
 
 describe('OpenPathEmptyAction', () => {
-  it('renders nothing without a desktop and opens the file in its default application with one', async () => {
+  it('offers a download without a desktop and opens the file in its default application with one', async () => {
     const absent = bench({ desktop: false })
-    expect(render(<OpenPathEmptyAction {...absent.props} />).container.innerHTML).toBe('')
+    /* The prominent empty-state control follows the same rule: no desktop means a download. */
+    const link = render(<OpenPathEmptyAction {...absent.props} />).container.querySelector('a')
+    expect(link?.getAttribute('href')).toBe(`/ssh-bridge/file?p=${encodeURIComponent(ABSOLUTE_PATH)}`)
     cleanup()
     const b = bench()
     render(<OpenPathEmptyAction {...b.props} />)
