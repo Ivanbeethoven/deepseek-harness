@@ -9,6 +9,7 @@ import type { OpenInAppPathAction } from './open-path.ts'
 import type { OpenInAppOutcome } from './outcome.ts'
 import { useFileApplications } from './file-applications.ts'
 import { OpenTargetButton, type OpenTargetReporter } from './OpenTargetButton.tsx'
+import styles from './OpenTargetButton.module.css'
 import type { NS } from './locales.ts'
 
 /** Desktop availability and the gesture carrier injected into both path controls. */
@@ -43,7 +44,23 @@ export function FileOpenTarget(props: FileOpenTargetProps): ReactNode {
   useEffect(() => {
     if (desktop === null) void props.loadDesktop()
   }, [desktop, props.loadDesktop])
-  if (desktop !== true) return null
+  /*
+   * No host desktop means the file cannot be opened here — a phone browsing a remote
+   * session, for example. That is exactly when a download is what the user wants, so offer
+   * one instead of rendering nothing.
+   */
+  if (desktop !== true) {
+    return (
+      <a
+        className={styles.main}
+        href={`/ssh-bridge/file?p=${encodeURIComponent(props.absolutePath)}`}
+        download
+        title={props.t('path.download')}
+      >
+        {props.t('path.download')}
+      </a>
+    )
+  }
   const { apps } = association
   return (
     <OpenTargetButton
